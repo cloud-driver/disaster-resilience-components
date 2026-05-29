@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-05-29T15:00:00+08:00",
+  "source": "silent-disaster-zone-api",
+  "areas": [
+    {
+      "area_id": "HL-V001",
+      "county": "花蓮縣",
+      "town": "光復鄉",
+      "village": "大安村",
+      "lat": 23.6651,
+      "lng": 121.4213,
+      "silent_risk_score": 0.91,
+      "risk_level": "critical",
+      "reasons": [
+        "高淹水風險",
+        "通報數偏低",
+        "高齡人口比例高",
+        "鄰近道路可能中斷"
+      ]
+    },
+    {
+      "area_id": "HL-V002",
+      "county": "花蓮縣",
+      "town": "萬榮鄉",
+      "village": "明利村",
+      "lat": 23.7059,
+      "lng": 121.4072,
+      "silent_risk_score": 0.84,
+      "risk_level": "high",
+      "reasons": [
+        "土石流風險較高",
+        "近三小時通報不足",
+        "交通可及性較低"
+      ]
+    }
+  ]
+}

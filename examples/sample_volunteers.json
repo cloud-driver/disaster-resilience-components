@@ -1,0 +1,36 @@
+{
+  "volunteers": [
+    {
+      "volunteer_id": "V001",
+      "name": "志工A",
+      "lat": 23.6700,
+      "lng": 121.4300,
+      "skills": ["field_check", "communication"],
+      "available": true
+    },
+    {
+      "volunteer_id": "V002",
+      "name": "志工B",
+      "lat": 23.7000,
+      "lng": 121.4100,
+      "skills": ["medical", "rescue"],
+      "available": true
+    },
+    {
+      "volunteer_id": "V003",
+      "name": "志工C",
+      "lat": 23.6500,
+      "lng": 121.3900,
+      "skills": ["transport", "supply"],
+      "available": false
+    },
+    {
+      "volunteer_id": "V004",
+      "name": "志工D",
+      "lat": 23.7100,
+      "lng": 121.4050,
+      "skills": ["field_check", "transport"],
+      "available": true
+    }
+  ]
+}

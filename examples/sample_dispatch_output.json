@@ -1,0 +1,170 @@
+{
+  "demo_name": "Silent Disaster Zone to Volunteer Dispatch Integration Demo",
+  "description": "This demo converts high-risk low-report areas into field-check tasks and recommends suitable volunteers.",
+  "tasks": [
+    {
+      "task_id": "TASK-HL-V001",
+      "source_component": "silent-disaster-zone-api",
+      "area": {
+        "county": "花蓮縣",
+        "town": "光復鄉",
+        "village": "大安村"
+      },
+      "risk": {
+        "silent_risk_score": 0.91,
+        "risk_level": "critical",
+        "reasons": [
+          "高淹水風險",
+          "通報數偏低",
+          "高齡人口比例高",
+          "鄰近道路可能中斷"
+        ]
+      },
+      "task": {
+        "task_type": "field_check",
+        "priority": "urgent",
+        "description": "請前往花蓮縣光復鄉大安村確認是否有未通報災情。"
+      },
+      "location": {
+        "lat": 23.6651,
+        "lng": 121.4213
+      },
+      "required_skills": [
+        "field_check",
+        "medical",
+        "transport"
+      ]
+    },
+    {
+      "task_id": "TASK-HL-V002",
+      "source_component": "silent-disaster-zone-api",
+      "area": {
+        "county": "花蓮縣",
+        "town": "萬榮鄉",
+        "village": "明利村"
+      },
+      "risk": {
+        "silent_risk_score": 0.84,
+        "risk_level": "high",
+        "reasons": [
+          "土石流風險較高",
+          "近三小時通報不足",
+          "交通可及性較低"
+        ]
+      },
+      "task": {
+        "task_type": "field_check",
+        "priority": "high",
+        "description": "請前往花蓮縣萬榮鄉明利村確認是否有未通報災情。"
+      },
+      "location": {
+        "lat": 23.7059,
+        "lng": 121.4072
+      },
+      "required_skills": [
+        "field_check",
+        "transport"
+      ]
+    }
+  ],
+  "dispatch_results": [
+    {
+      "task_id": "TASK-HL-V001",
+      "area": {
+        "county": "花蓮縣",
+        "town": "光復鄉",
+        "village": "大安村"
+      },
+      "priority": "urgent",
+      "required_skills": [
+        "field_check",
+        "medical",
+        "transport"
+      ],
+      "recommended_volunteer": {
+        "volunteer_id": "V004",
+        "name": "志工D",
+        "matched_skills": [
+          "transport",
+          "field_check"
+        ],
+        "distance_km": 5.26,
+        "score": 84.22
+      },
+      "candidates": [
+        {
+          "volunteer_id": "V004",
+          "name": "志工D",
+          "matched_skills": [
+            "transport",
+            "field_check"
+          ],
+          "distance_km": 5.26,
+          "score": 84.22
+        },
+        {
+          "volunteer_id": "V001",
+          "name": "志工A",
+          "matched_skills": [
+            "field_check"
+          ],
+          "distance_km": 1.04,
+          "score": 46.88
+        },
+        {
+          "volunteer_id": "V002",
+          "name": "志工B",
+          "matched_skills": [
+            "medical"
+          ],
+          "distance_km": 4.05,
+          "score": 37.86
+        }
+      ]
+    },
+    {
+      "task_id": "TASK-HL-V002",
+      "area": {
+        "county": "花蓮縣",
+        "town": "萬榮鄉",
+        "village": "明利村"
+      },
+      "priority": "high",
+      "required_skills": [
+        "field_check",
+        "transport"
+      ],
+      "recommended_volunteer": {
+        "volunteer_id": "V004",
+        "name": "志工D",
+        "matched_skills": [
+          "transport",
+          "field_check"
+        ],
+        "distance_km": 0.51,
+        "score": 98.48
+      },
+      "candidates": [
+        {
+          "volunteer_id": "V004",
+          "name": "志工D",
+          "matched_skills": [
+            "transport",
+            "field_check"
+          ],
+          "distance_km": 0.51,
+          "score": 98.48
+        },
+        {
+          "volunteer_id": "V001",
+          "name": "志工A",
+          "matched_skills": [
+            "field_check"
+          ],
+          "distance_km": 4.62,
+          "score": 36.15
+        }
+      ]
+    }
+  ]
+}

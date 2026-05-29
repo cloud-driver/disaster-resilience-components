@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/integrated_task.schema.json",
+  "title": "Integrated Disaster Task",
+  "description": "A normalized task generated from a silent disaster zone detection result and passed to the volunteer dispatch component.",
+  "type": "object",
+  "required": [
+    "task_id",
+    "source_component",
+    "area",
+    "risk",
+    "task",
+    "location",
+    "required_skills"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Unique task identifier."
+    },
+    "source_component": {
+      "type": "string",
+      "enum": ["silent-disaster-zone-api"],
+      "description": "The component that generated this task."
+    },
+    "area": {
+      "type": "object",
+      "required": ["county", "town", "village"],
+      "properties": {
+        "county": { "type": "string" },
+        "town": { "type": "string" },
+        "village": { "type": "string" }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": ["silent_risk_score", "risk_level", "reasons"],
+      "properties": {
+        "silent_risk_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "required": ["task_type", "priority", "description"],
+      "properties": {
+        "task_type": {
+          "type": "string",
+          "enum": ["field_check", "evacuation_support", "supply_delivery", "medical_support", "road_status_check"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "urgent"]
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "required": ["lat", "lng"],
+      "properties": {
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "lng": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        }
+      }
+    },
+    "required_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["field_check", "medical", "transport", "rescue", "communication", "supply"]
+      }
+    }
+  }
+}
