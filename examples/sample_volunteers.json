@@ -31,6 +31,14 @@
       "lng": 121.4050,
       "skills": ["field_check", "transport"],
       "available": true
+    },
+    {
+      "volunteer_id": "V005",
+      "name": "志工E",
+      "lat": 23.6660,
+      "lng": 121.4230,
+      "skills": ["field_check", "medical", "transport"],
+      "available": true
     }
   ]
 }

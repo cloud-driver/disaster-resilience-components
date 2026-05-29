@@ -46,7 +46,7 @@
 | Silent Disaster Zone Detection API | 找出高風險但低通報的「沉默災區」 | 村里界、人口、風險圖資、雨量、土石流警戒、路況、通報資料 | `silent_risk.json`、`silent_risk.csv`、`silent_risk.geojson` | [cloud-driver/silent-disaster-zone-api](https://github.com/cloud-driver/silent-disaster-zone-api) |
 | Disaster Volunteer Dispatcher API | 將任務分配給合適志工 | 任務、志工、技能、位置、可用狀態、緊急度 | 派遣清單、ETA、AI / 演算法推理摘要 | [D4rk-N355/disaster_rescuing](https://github.com/D4rk-N355/disaster_rescuing) |
 
-## 3. 建議 repository 結構
+## 3. repository 結構
 
 ```text
 disaster-resilience-components/
@@ -96,6 +96,7 @@ disaster-resilience-components/
 | API 契約 | [docs/api_contract.md](docs/api_contract.md) | [docs/api_contract.en.md](docs/api_contract.en.md) |
 | AI 使用說明 | [docs/ai_usage.md](docs/ai_usage.md) | [docs/ai_usage.en.md](docs/ai_usage.en.md) |
 | 限制與風險 | [docs/limitations.md](docs/limitations.md) | [docs/limitations.en.md](docs/limitations.en.md) |
+| 資料來源與接入規劃 | [docs/data_sources.md](docs/data_sources.md) | [docs/data_sources.en.md](docs/data_sources.en.md) |
 
 ## 6. MVP 範圍
 

@@ -1,10 +1,18 @@
 import json
 import math
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Set, Optional
 
 
 BASE_DIR = Path(__file__).resolve().parent
+
+
+PRIORITY_RANK = {
+    "urgent": 4,
+    "high": 3,
+    "medium": 2,
+    "low": 1
+}
 
 
 def load_json(path: Path) -> Dict[str, Any]:
@@ -75,9 +83,9 @@ def risk_to_task(area: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def score_volunteer(task: Dict[str, Any], volunteer: Dict[str, Any]) -> float:
+def score_volunteer(task: Dict[str, Any], volunteer: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if not volunteer.get("available", False):
-        return -1
+        return None
 
     task_lat = task["location"]["lat"]
     task_lng = task["location"]["lng"]
@@ -91,48 +99,92 @@ def score_volunteer(task: Dict[str, Any], volunteer: Dict[str, Any]) -> float:
 
     required_skills = set(task["required_skills"])
     volunteer_skills = set(volunteer["skills"])
-    matched_skills = len(required_skills.intersection(volunteer_skills))
 
-    skill_score = matched_skills * 50
+    matched_skills = sorted(required_skills.intersection(volunteer_skills))
+    missing_skills = sorted(required_skills.difference(volunteer_skills))
+
+    if not matched_skills:
+        return None
+
+    skill_match_ratio = len(matched_skills) / len(required_skills)
+    skill_score = skill_match_ratio * 100
     distance_penalty = distance * 3
 
-    return skill_score - distance_penalty
+    final_score = skill_score - distance_penalty
+
+    return {
+        "volunteer_id": volunteer["volunteer_id"],
+        "name": volunteer["name"],
+        "matched_skills": matched_skills,
+        "missing_required_skills": missing_skills,
+        "distance_km": round(distance, 2),
+        "score": round(final_score, 2)
+    }
 
 
-def dispatch_task(task: Dict[str, Any], volunteers: List[Dict[str, Any]]) -> Dict[str, Any]:
+def dispatch_task(
+    task: Dict[str, Any],
+    volunteers: List[Dict[str, Any]],
+    assigned_volunteer_ids: Set[str]
+) -> Dict[str, Any]:
     candidates = []
 
     for volunteer in volunteers:
-        score = score_volunteer(task, volunteer)
-
-        if score < 0:
+        if volunteer["volunteer_id"] in assigned_volunteer_ids:
             continue
 
-        distance = haversine_km(
-            task["location"]["lat"],
-            task["location"]["lng"],
-            volunteer["lat"],
-            volunteer["lng"]
-        )
+        scored_candidate = score_volunteer(task, volunteer)
 
-        candidates.append({
-            "volunteer_id": volunteer["volunteer_id"],
-            "name": volunteer["name"],
-            "matched_skills": list(set(task["required_skills"]).intersection(set(volunteer["skills"]))),
-            "distance_km": round(distance, 2),
-            "score": round(score, 2)
-        })
+        if scored_candidate is not None:
+            candidates.append(scored_candidate)
 
     candidates.sort(key=lambda item: item["score"], reverse=True)
+
+    recommended = candidates[0] if candidates else None
+
+    warning = None
+    if recommended is None:
+        warning = "No available volunteer matched this task."
+    elif recommended["missing_required_skills"]:
+        warning = "Recommended volunteer does not cover all required skills. Human review is required."
 
     return {
         "task_id": task["task_id"],
         "area": task["area"],
         "priority": task["task"]["priority"],
         "required_skills": task["required_skills"],
-        "recommended_volunteer": candidates[0] if candidates else None,
-        "candidates": candidates
+        "recommended_volunteer": recommended,
+        "candidates": candidates,
+        "warning": warning
     }
+
+
+def dispatch_all_tasks(
+    tasks: List[Dict[str, Any]],
+    volunteers: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    sorted_tasks = sorted(
+        tasks,
+        key=lambda task: (
+            PRIORITY_RANK.get(task["task"]["priority"], 0),
+            task["risk"]["silent_risk_score"]
+        ),
+        reverse=True
+    )
+
+    assigned_volunteer_ids: Set[str] = set()
+    results = []
+
+    for task in sorted_tasks:
+        result = dispatch_task(task, volunteers, assigned_volunteer_ids)
+
+        recommended = result.get("recommended_volunteer")
+        if recommended is not None:
+            assigned_volunteer_ids.add(recommended["volunteer_id"])
+
+        results.append(result)
+
+    return results
 
 
 def main() -> None:
@@ -140,14 +192,16 @@ def main() -> None:
     volunteer_data = load_json(BASE_DIR / "sample_volunteers.json")
 
     tasks = [risk_to_task(area) for area in silent_zone_data["areas"]]
-    dispatch_results = [
-        dispatch_task(task, volunteer_data["volunteers"])
-        for task in tasks
-    ]
+    dispatch_results = dispatch_all_tasks(tasks, volunteer_data["volunteers"])
 
     output = {
         "demo_name": "Silent Disaster Zone to Volunteer Dispatch Integration Demo",
-        "description": "This demo converts high-risk low-report areas into field-check tasks and recommends suitable volunteers.",
+        "description": "This demo converts high-risk low-report areas into field-check tasks and recommends suitable volunteers without assigning the same volunteer twice.",
+        "notes": [
+            "This is a lightweight integration demo.",
+            "Final dispatch decisions should be reviewed by human coordinators.",
+            "AI or algorithmic recommendations must not replace emergency command decisions."
+        ],
         "tasks": tasks,
         "dispatch_results": dispatch_results
     }

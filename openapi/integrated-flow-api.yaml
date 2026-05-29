@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: Dual Disaster Component Integration Flow API
+  version: 0.1.0
+  description: >
+    This OpenAPI document describes the data contract for connecting the
+    Silent Disaster Zone Detection component with the Volunteer Dispatch component.
+    It is intended as an integration contract for future service implementation.
+
+paths:
+  /integrated-flow/dispatch-recommendations:
+    post:
+      summary: Generate volunteer dispatch recommendations from silent disaster zone tasks
+      description: >
+        Accepts normalized disaster tasks generated from high-risk low-report areas
+        and returns ranked volunteer dispatch recommendations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tasks
+                - volunteers
+              properties:
+                tasks:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/IntegratedTask"
+                volunteers:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Volunteer"
+      responses:
+        "200":
+          description: Dispatch recommendations generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - dispatch_results
+                properties:
+                  dispatch_results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DispatchResult"
+
+components:
+  schemas:
+    IntegratedTask:
+      type: object
+      required:
+        - task_id
+        - source_component
+        - area
+        - risk
+        - task
+        - location
+        - required_skills
+      properties:
+        task_id:
+          type: string
+          example: TASK-HL-V001
+        source_component:
+          type: string
+          example: silent-disaster-zone-api
+        area:
+          type: object
+          required:
+            - county
+            - town
+            - village
+          properties:
+            county:
+              type: string
+              example: 花蓮縣
+            town:
+              type: string
+              example: 光復鄉
+            village:
+              type: string
+              example: 大安村
+        risk:
+          type: object
+          required:
+            - silent_risk_score
+            - risk_level
+            - reasons
+          properties:
+            silent_risk_score:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              example: 0.91
+            risk_level:
+              type: string
+              enum:
+                - low
+                - medium
+                - high
+                - critical
+              example: critical
+            reasons:
+              type: array
+              items:
+                type: string
+              example:
+                - 高淹水風險
+                - 通報數偏低
+        task:
+          type: object
+          required:
+            - task_type
+            - priority
+            - description
+          properties:
+            task_type:
+              type: string
+              enum:
+                - field_check
+                - evacuation_support
+                - supply_delivery
+                - medical_support
+                - road_status_check
+              example: field_check
+            priority:
+              type: string
+              enum:
+                - low
+                - medium
+                - high
+                - urgent
+              example: urgent
+            description:
+              type: string
+              example: 請前往花蓮縣光復鄉大安村確認是否有未通報災情。
+        location:
+          type: object
+          required:
+            - lat
+            - lng
+          properties:
+            lat:
+              type: number
+              example: 23.6651
+            lng:
+              type: number
+              example: 121.4213
+        required_skills:
+          type: array
+          items:
+            type: string
+            enum:
+              - field_check
+              - medical
+              - transport
+              - rescue
+              - communication
+              - supply
+          example:
+            - field_check
+            - medical
+            - transport
+
+    Volunteer:
+      type: object
+      required:
+        - volunteer_id
+        - name
+        - lat
+        - lng
+        - skills
+        - available
+      properties:
+        volunteer_id:
+          type: string
+          example: V001
+        name:
+          type: string
+          example: 志工A
+        lat:
+          type: number
+          example: 23.67
+        lng:
+          type: number
+          example: 121.43
+        skills:
+          type: array
+          items:
+            type: string
+          example:
+            - field_check
+            - communication
+        available:
+          type: boolean
+          example: true
+
+    DispatchResult:
+      type: object
+      required:
+        - task_id
+        - area
+        - priority
+        - required_skills
+        - recommended_volunteer
+        - candidates
+      properties:
+        task_id:
+          type: string
+          example: TASK-HL-V001
+        area:
+          type: object
+        priority:
+          type: string
+          example: urgent
+        required_skills:
+          type: array
+          items:
+            type: string
+        recommended_volunteer:
+          type: object
+          nullable: true
+        candidates:
+          type: array
+          items:
+            type: object
+        warning:
+          type: string
+          nullable: true
+          example: Recommended volunteer does not cover all required skills. Human review is required.
