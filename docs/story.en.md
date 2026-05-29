@@ -1,5 +1,5 @@
 <p align="right">
-[繁體中文](story.md) | English
+<a href="./story.md">繁體中文</a> | English
 </p>
 
 # Story and Problem Definition

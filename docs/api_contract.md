@@ -1,5 +1,5 @@
 <p align="right">
-繁體中文 | [English](api_contract.en.md)
+繁體中文 | <a href="./api_contract.en.md">English</a>
 </p>
 
 # API 契約

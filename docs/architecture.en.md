@@ -1,5 +1,5 @@
 <p align="right">
-[繁體中文](architecture.md) | English
+<a href="./architecture.md">繁體中文</a> | English
 </p>
 
 # Architecture

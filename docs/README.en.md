@@ -1,5 +1,5 @@
 <p align="right">
-[繁體中文](README.md) | English
+<a href="./README.md">繁體中文</a> | English
 </p>
 
 # Documentation Index

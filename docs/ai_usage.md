@@ -1,5 +1,5 @@
 <p align="right">
-繁體中文 | [English](ai_usage.en.md)
+繁體中文 | <a href="./ai_usage.en.md">English</a>
 </p>
 
 # AI 使用說明

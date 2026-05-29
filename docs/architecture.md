@@ -1,5 +1,5 @@
 <p align="right">
-繁體中文 | [English](architecture.en.md)
+繁體中文 | <a href="./architecture.en.md">English</a>
 </p>
 
 # 系統架構

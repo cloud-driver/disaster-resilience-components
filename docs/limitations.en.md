@@ -1,5 +1,5 @@
 <p align="right">
-[繁體中文](limitations.md) | English
+<a href="./limitations.md">繁體中文</a> | English
 </p>
 
 # Limitations, Risks, and Improvement Plan

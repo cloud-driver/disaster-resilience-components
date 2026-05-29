@@ -1,5 +1,5 @@
 <p align="right">
-繁體中文 | [English](README.en.md)
+繁體中文 | <a href="./README.en.md">English</a>
 </p>
 
 # 文件索引
