@@ -2,9 +2,9 @@
 <a href="./README.md">繁體中文</a> | English
 </p>
 
-# Dual Disaster Decision Chain
+# Silent Disaster Zone Detection API × Disaster Volunteer Dispatcher API
 
-> Silent Disaster Zone Detection API × Disaster Volunteer Dispatcher API  
+> Dual Disaster Decision Chain
 > Identify high-risk areas that may be underreported, then recommend suitable volunteers for field-check, rescue, or support tasks.
 
 This repository is the **submission entry point and integration demo repository** for the disaster-response component competition.  
