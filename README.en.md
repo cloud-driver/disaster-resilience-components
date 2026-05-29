@@ -2,119 +2,262 @@
 <a href="./README.md">繁體中文</a> | English
 </p>
 
-# Two-Component Disaster Response Decision Chain
+# Dual Disaster Decision Chain
 
-> **Silent Disaster Zone Detection API × Disaster Volunteer Dispatcher API**  
-> Identify high-risk areas that may be underreported, then assign verification or response tasks to the most suitable volunteers.
+> Silent Disaster Zone Detection API × Disaster Volunteer Dispatcher API  
+> Identify high-risk areas that may be underreported, then recommend suitable volunteers for field-check, rescue, or support tasks.
 
-This repository is the **main proposal / integration repository** for the “Disaster-Prevention Building Block Component Innovation Challenge: Civic Tech for a Resilient Taiwan.” It is not a monolithic disaster-management platform. Instead, it presents two reusable API components that can be deployed independently and connected to other disaster-response systems.
+This repository is the **submission entry point and integration demo repository** for the disaster-response component competition.  
+This project is not a monolithic disaster-response platform. It is a modular chain composed of two independent, reusable, and integrable disaster-response components.
 
-## 1. Why do we need both components?
+---
 
-After a disaster, command centers usually see the places where reports already exist: flooded roads, blocked routes, urgent supply needs, or rescue requests.
+## Judge Entry Point: Recommended Review Order
 
-However, the most dangerous places may be silent. Some villages may have high flood or landslide risk, a high proportion of elderly residents, possible road disruption, unstable connectivity, or weak sensor coverage. Yet they may generate few or no reports because residents cannot report, communication is down, or digital tools are difficult to use.
+To review the actual component implementations, please start with the two original repositories below.  
+This repository explains how the two components are connected into one disaster decision-support chain.
 
-The first component, **Silent Disaster Zone Detection API**, answers:
+| Review Order | Repository | Role | What to Review |
+|---|---|---|---|
+| 1 | [Silent Disaster Zone Detection API](https://github.com/cloud-driver/silent-disaster-zone-api) | Identifies high-risk but low-report “silent disaster zones” | README, API endpoints, sample inputs and outputs, JSON / CSV / GeoJSON results |
+| 2 | [Disaster Volunteer Dispatcher API](https://github.com/D4rk-N355/disaster_rescuing) | Recommends volunteers based on tasks, skills, location, and availability | README, API endpoints, Pydantic schemas, Ollama / fallback dispatch logic |
+| 3 | [`examples/integration_demo.py`](./examples/integration_demo.py) in this repository | Demonstrates how the two components are connected | Converts silent-zone results into tasks and generates volunteer dispatch recommendations |
 
-> Which areas should receive attention but currently have few or no reports?
+This repository does not replace the two component repositories.  
+Instead, it provides:
 
-Once these areas are found, the next question is operational: who should verify the area, deliver supplies, provide medical help, or perform field checks?
+1. The integrated story of the dual-component workflow
+2. The shared `IntegratedTask` data format
+3. A runnable integration demo
+4. OpenAPI / JSON Schema / documentation navigation
+5. A complete submission entry point
 
-The second component, **Disaster Volunteer Dispatcher API**, answers:
+---
 
-> Which volunteers are most suitable for each verification, patrol, or response task?
+## 30-Second Summary
 
-Together, the two components form a clear disaster-response decision chain:
+After a disaster, the first visible areas are usually the places that have already reported damage.  
+However, the most dangerous places may be silent due to communication failure, elderly population, road disruption, or limited digital access.
+
+This project therefore provides two modular components:
+
+| Component | Problem Solved | Output |
+|---|---|---|
+| Silent Disaster Zone Detection API | Which areas are high-risk but underreported? | High-risk low-report areas, silent risk scores, GeoJSON / CSV / JSON |
+| Disaster Volunteer Dispatcher API | After high-risk areas are found, who should check or support them? | Volunteer candidates, dispatch recommendations, human-review warnings |
+
+Core flow:
 
 ```text
 Silent Disaster Zone Detection API
-Find high-risk, low-report, low-observation villages
         ↓
-Generate verification / patrol / response tasks
+High-risk Low-report Areas
+        ↓
+IntegratedTask Standard Format
         ↓
 Disaster Volunteer Dispatcher API
-Match tasks with volunteers based on task type, skills, location, availability, and urgency
         ↓
-Human commander reviews and acts
+Dispatch Recommendations
 ```
 
-## 2. Components
+---
 
-| Component | Role | Input | Output | Source repository |
-|---|---|---|---|---|
-| Silent Disaster Zone Detection API | Detect high-risk but underreported “silent disaster zones” | Village boundaries, population, risk maps, rainfall, landslide alerts, road events, reports | `silent_risk.json`, `silent_risk.csv`, `silent_risk.geojson` | [cloud-driver/silent-disaster-zone-api](https://github.com/cloud-driver/silent-disaster-zone-api) |
-| Disaster Volunteer Dispatcher API | Assign response tasks to suitable volunteers | Tasks, volunteers, skills, locations, availability, urgency | Assignment list, ETA, AI / algorithm reasoning summary | [D4rk-N355/disaster_rescuing](https://github.com/D4rk-N355/disaster_rescuing) |
+## Why Both Functions Are Needed
 
-## 3. Recommended repository structure
+Finding high-risk areas is not enough.
+
+In real disaster response, decision makers need an actionable flow:
+
+1. Which areas may be overlooked?
+2. Which areas require proactive field checks?
+3. Which tasks are the most urgent?
+4. Which volunteers have the required skills?
+5. Who is nearby and available?
+6. Which recommendations require human review?
+
+This project connects two components into one decision chain:
+
+- **Silent Disaster Zone Detection API** helps the system see overlooked risks.
+- **Disaster Volunteer Dispatcher API** helps convert those risks into actionable assignments.
+
+This follows the modular component design principle:  
+each component can work independently, while also being reusable, replaceable, and integrable with other systems.
+
+---
+
+## Quick Run: Integration Demo
+
+This repository provides an integration demo that runs without external API keys.  
+It reads sample silent-zone results and volunteer data, then generates tasks and dispatch recommendations.
+
+```bash
+python3 examples/integration_demo.py
+```
+
+The demo generates:
 
 ```text
-disaster-resilience-components/
-├── README.md
-├── README.en.md
-├── docs/
-│   ├── story.md
-│   ├── story.en.md
-│   ├── architecture.md
-│   ├── architecture.en.md
-│   ├── api_contract.md
-│   ├── api_contract.en.md
-│   ├── ai_usage.md
-│   ├── ai_usage.en.md
-│   ├── limitations.md
-│   └── limitations.en.md
-└── components/
-    ├── silent-disaster-zone-api/
-    └── disaster_rescuing/
+examples/sample_dispatch_output.json
 ```
 
-> We recommend copying the two existing repositories into `components/`, or keeping the original repository links in the README. This preserves the “building block” nature of the work better than merging both backends into one codebase.
+The demo shows how to:
 
-## 4. Integration flow
+1. Read silent disaster zone detection results
+2. Convert high-risk low-report areas into `IntegratedTask`
+3. Recommend volunteers based on task needs, skills, location, and availability
+4. Avoid assigning the same volunteer to multiple tasks
+5. Add human-review warnings when skills are missing or risks are high
 
-1. **Data enters the Silent Disaster Zone Detection API**  
-   The system combines static risk data and realtime event signals, such as village boundaries, population, elderly ratio, flood potential, landslide data, rainfall, road events, and report records.
+---
 
-2. **High-priority areas are returned**  
-   The API outputs village-level silent risk scores, risk levels, explanation strings, and a GeoJSON layer.
+## Integration Demo Data Flow
 
-3. **Areas are converted into verification or response tasks**  
-   High-risk but low-report areas can be converted into tasks such as “verify road accessibility,” “check vulnerable households,” or “confirm supply needs.”
+```mermaid
+flowchart LR
+    A[Sample Silent Zone Output] --> B[Task Transformer]
+    B --> C[IntegratedTask]
+    C --> D[Volunteer Dispatch Logic]
+    E[Sample Volunteers] --> D
+    D --> F[Dispatch Recommendation JSON]
+```
 
-4. **Tasks are sent to the Volunteer Dispatcher API**  
-   The dispatcher API uses task type, volunteer skills, volunteer locations, availability, and urgency to recommend assignments.
+---
 
-5. **Humans make the final decision**  
-   AI and algorithms provide decision support only. They do not issue evacuation orders or replace official command authority.
+## Core Components
 
-## 5. Documentation
+| Component | Original Repository | Local Snapshot in This Repo | Description |
+|---|---|---|---|
+| Silent Disaster Zone Detection API | [cloud-driver/silent-disaster-zone-api](https://github.com/cloud-driver/silent-disaster-zone-api) | [`components/silent-disaster-zone-api/`](./components/silent-disaster-zone-api/) | Detects high-risk but low-report areas |
+| Disaster Volunteer Dispatcher API | [D4rk-N355/disaster_rescuing](https://github.com/D4rk-N355/disaster_rescuing) | [`components/disaster-rescuing/`](./components/disaster-rescuing/) | Generates volunteer dispatch recommendations |
 
-| Document | Traditional Chinese | English |
-|---|---|---|
-| Story and problem definition | [docs/story.md](docs/story.md) | [docs/story.en.md](docs/story.en.md) |
-| Architecture | [docs/architecture.md](docs/architecture.md) | [docs/architecture.en.md](docs/architecture.en.md) |
-| API contract | [docs/api_contract.md](docs/api_contract.md) | [docs/api_contract.en.md](docs/api_contract.en.md) |
-| AI usage | [docs/ai_usage.md](docs/ai_usage.md) | [docs/ai_usage.en.md](docs/ai_usage.en.md) |
-| Limitations and risks | [docs/limitations.md](docs/limitations.md) | [docs/limitations.en.md](docs/limitations.en.md) |
+> The `components/` folder contains local snapshots of the two components for review convenience after cloning this repository.  
+> However, the original repositories remain the recommended entry points for component-level review.
 
-## 6. MVP scope
+---
 
-The current MVP focuses on:
+## Input / Process / Output
 
-- Village-level silent disaster zone detection in Hualien County
-- Village risk scores and GeoJSON output
-- Standardized JSON input for tasks and volunteers
-- Local Ollama-based AI dispatch suggestions
-- Deterministic fallback dispatch when AI is unavailable
-- FastAPI / Swagger documentation
+| Stage | Input | Process | Output |
+|---|---|---|---|
+| Silent zone detection | Village data, risk data, report data, road status, demographic features | Calculate silent risk scores and identify high-risk low-report areas | Area list, JSON / CSV / GeoJSON |
+| Task transformation | Silent zone detection results | Convert area risk into field-check or rescue tasks | `IntegratedTask` |
+| Volunteer dispatch | Task data and volunteer data | Skill matching, distance calculation, availability check, duplicate-assignment prevention | Dispatch recommendations, volunteer candidates, human-review warnings |
 
-## 7. Core value
+---
 
-The project is not trying to build a large all-in-one platform. It separates the response workflow into two reusable components:
+## Repository Structure
 
-1. **See the overlooked areas**: Avoid relying only on high-report hotspots and missing high-risk silent areas.
-2. **Send the right people to the right places**: Match verification, patrol, logistics, medical, and administrative tasks with suitable responders faster.
+```text
+.
+├── README.md
+├── README.en.md
+├── components/
+│   ├── README.md
+│   ├── README.en.md
+│   ├── silent-disaster-zone-api/
+│   └── disaster-rescuing/
+├── docs/
+│   ├── quickstart.md
+│   ├── diagrams.md
+│   ├── architecture.md
+│   ├── api_contract.md
+│   ├── ai_usage.md
+│   ├── ai_governance.md
+│   ├── data_sources.md
+│   └── limitations.md
+├── examples/
+│   ├── integration_demo.py
+│   ├── sample_silent_zone_output.json
+│   ├── sample_volunteers.json
+│   └── sample_dispatch_output.json
+├── schemas/
+│   └── integrated_task.schema.json
+├── openapi/
+│   └── integrated-flow-api.yaml
+└── SUBMISSION_CHECKLIST.md
+```
 
-## 8. Boundaries of use
+---
 
-The risk scores and dispatch assignments are **decision-support outputs**. They are not official disaster confirmations and not evacuation orders. Final response decisions must remain with authorized government agencies, field commanders, or qualified professionals.
+## Important Documents
+
+| Document | Description |
+|---|---|
+| [Quickstart](./docs/quickstart.en.md) | How to run the integration demo locally |
+| [System Diagrams](./docs/diagrams.en.md) | Mermaid architecture and data-flow diagrams |
+| [Architecture](./docs/architecture.en.md) | Dual-component architecture and boundaries |
+| [API and Data Contract](./docs/api_contract.en.md) | API and data format description |
+| [IntegratedTask JSON Schema](./schemas/integrated_task.schema.json) | Standard task format connecting the two components |
+| [Integration Flow OpenAPI](./openapi/integrated-flow-api.yaml) | Integration data contract |
+| [Data Sources and Integration Plan](./docs/data_sources.en.md) | MVP data and future production data integration |
+| [AI Usage](./docs/ai_usage.en.md) | The role of AI in the system |
+| [AI Governance and Usage Boundaries](./docs/ai_governance.en.md) | AI risks, limits, and human-review principles |
+| [Limitations and Risks](./docs/limitations.en.md) | MVP limitations, data limitations, and deployment risks |
+| [Submission Checklist](./SUBMISSION_CHECKLIST.en.md) | Final checklist before submission |
+
+---
+
+## AI Usage and Governance Principles
+
+This project may use AI to support analysis and dispatch recommendations, but AI does not make final decisions.
+
+AI / algorithms may help with:
+
+- Summarizing risk factors
+- Generating task descriptions
+- Matching volunteer skills
+- Ranking volunteer candidates
+- Explaining dispatch recommendations
+
+AI / algorithms must not replace:
+
+- Disaster severity declaration
+- Evacuation orders
+- Field command
+- Actual volunteer dispatch decisions
+- Individual life-safety judgment
+
+All dispatch recommendations should be treated as **decision-support information**, not automatic commands.
+
+---
+
+## MVP Scope
+
+The current MVP validates the data flow and component integration:
+
+- Generate high-risk low-report areas from sample data
+- Convert areas into standard tasks
+- Generate dispatch recommendations from volunteer data
+- Output structured JSON
+- Demonstrate human-review warnings
+
+The MVP does not claim that:
+
+- All real-time government data sources are fully integrated
+- The system can be directly used for real disaster dispatch
+- AI results can replace emergency command decisions
+- Volunteer data authorization and privacy governance are fully completed
+
+---
+
+## Security and Privacy Notes
+
+This repository should not contain:
+
+- API keys
+- tokens
+- passwords
+- `.env`
+- real volunteer personal data
+- real contact information
+- private IPs, Tailscale IPs, or ngrok URLs
+- unauthorized real GPS trajectory data
+
+Sample data is used only to demonstrate data formats and workflows. It does not represent real disaster results.
+
+---
+
+## License
+
+This project is prepared for competition submission and demonstration.  
+If released as an open-source component in the future, MIT or Apache 2.0 is recommended, with third-party data and package licenses reviewed for compatibility.

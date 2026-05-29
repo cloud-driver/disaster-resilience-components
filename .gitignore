@@ -1,18 +1,22 @@
 # macOS
 .DS_Store
 
-# Python
+# Python cache
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 .Python
+
+# Virtual environments
 .venv/
 venv/
 env/
 
 # Environment files
 .env
+.env.local
+.env.*.local
 
 # IDE
 .vscode/
@@ -24,3 +28,10 @@ env/
 # Temporary files
 tmp/
 temp/
+
+# Node
+node_modules/
+
+# Local output
+*.sqlite
+*.db
