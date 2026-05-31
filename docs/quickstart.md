@@ -11,20 +11,23 @@
 ```bash
 git clone <your-repository-url>
 cd disaster-resilience-components
-````
+```
 
 ## 2. 確認 Python 版本
 
-建議使用 Python 3.9 以上。
-
-```bash
-python3 --version
-```
+建議使用 Python 3.12.10。
 
 ## 3. 執行整合 Demo
+請執行
 
+Mac/Linux
 ```bash
 python3 examples/integration_demo.py
+```
+
+Windows
+```bash
+python examples/integration_demo.py
 ```
 
 執行後會看到：

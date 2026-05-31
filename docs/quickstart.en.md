@@ -11,20 +11,22 @@ This document explains how to run the integration demo for the dual disaster-res
 ```bash
 git clone <your-repository-url>
 cd disaster-resilience-components
-````
+```
 
 ## 2. Check Python Version
 
-Python 3.9 or later is recommended.
-
-```bash
-python3 --version
-```
+Python 3.12.10 is recommended.
 
 ## 3. Run the Integration Demo
 
+Mac/Linux
 ```bash
 python3 examples/integration_demo.py
+```
+
+Windows
+```bash
+python examples/integration_demo.py
 ```
 
 The demo will:

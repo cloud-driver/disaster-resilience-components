@@ -88,8 +88,14 @@ IntegratedTask 標準任務格式
 本 repo 提供一個不需要外部 API key 的整合 demo。  
 它會讀取樣本沉默災區結果與志工資料，產生任務與派遣建議。
 
+Mac/Linux
 ```bash
 python3 examples/integration_demo.py
+```
+
+Windows
+```bash
+python examples/integration_demo.py
 ```
 
 執行後會產生：
@@ -257,5 +263,4 @@ AI / 演算法不可取代：
 
 ## 授權
 
-本作品為競賽提交與展示用途。  
-若後續上架為開源元件，建議採用 MIT 或 Apache 2.0 授權，並確認所有第三方資料與套件授權相容。
+[LICENSE](./LICENSE)

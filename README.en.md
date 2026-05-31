@@ -90,8 +90,14 @@ each component can work independently, while also being reusable, replaceable, a
 This repository provides an integration demo that runs without external API keys.  
 It reads sample silent-zone results and volunteer data, then generates tasks and dispatch recommendations.
 
+Mac/Linux
 ```bash
 python3 examples/integration_demo.py
+```
+
+Windows
+```bash
+python examples/integration_demo.py
 ```
 
 The demo generates:
@@ -259,5 +265,4 @@ Sample data is used only to demonstrate data formats and workflows. It does not 
 
 ## License
 
-This project is prepared for competition submission and demonstration.  
-If released as an open-source component in the future, MIT or Apache 2.0 is recommended, with third-party data and package licenses reviewed for compatibility.
+[LICENSE](./LICENSE)
