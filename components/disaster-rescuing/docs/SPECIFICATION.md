@@ -1,151 +1,149 @@
-# Dispatch Service Specification (Ollama 本地版)
+# 災害志工派工 API 技術規格
 
-## 1. 概述
+> 對應上游 `D4rk-N355/volunteer_distributing` 的目前功能。實際 request／response 模型與路由請以 FastAPI 服務的 OpenAPI 為準。
 
-本服務使用 **Ollama** 本地大語言模型進行志工派發。與雲端 API 相比，本地部署提供：
-- 完整隱私性（數據不離開本地）
-- 穩定性（不依賴網路連線）
-- 成本控制（一次性下載模型）
+## 系統概覽
 
-## 2. 架構
+服務接收災害事件、工作類型、志工與任務資料，先篩選可出勤志工，再依技能符合度、路徑距離與任務急迫度建立派工建議。結果包含指派候選、ETA、信心分數、分數拆解、未指派任務與異常警示。
 
-- **DispatchService 類**：主要邏輯，負責編排 AI 調用和本地演算法
-- **Ollama API 客戶端**：HTTP 請求直接呼叫本地 Ollama 服務
-- **本地演算法**：技能匹配 + 距離優先，保證總是能給出分配
+## Endpoint 總覽
 
-## 3. 環境配置
+| Method | Endpoint | 功能 |
+|---|---|---|
+| `GET` | `/` | API 是否啟動。 |
+| `GET` | `/health` | API 與 Ollama 狀態。 |
+| `POST` | `/api/v1/dispatch` | 直接送入完整資料並立即派工。 |
+| `POST` | `/api/v1/dispatch/setup` | 儲存事件與任務，不開放報名、不派工。 |
+| `POST` | `/api/v1/dispatch/start` | 儲存設定、清空前輪表單、開放報名並嘗試推送群組連結。 |
+| `POST` | `/api/v1/dispatch/finish` | 結束報名、合併志工資料並派工。 |
+| `POST` | `/api/v1/line/register` | 登記／更新單一 LINE 志工。 |
+| `POST` | `/api/v1/line/register/bulk` | 批次登記／更新 LINE 志工。 |
+| `POST` | `/api/v1/line/send-group-message` | 推送測試或公告訊息到 LINE 群組。 |
+| `POST` | `/webhook` | LINE Messaging API webhook。 |
+| `GET` | `/volunteer/form` | 公開志工報名表。 |
+| `GET` | `/volunteer/form/{line_user_id}` | 包含 LINE user ID 的個人表單。 |
+| `GET` | `/webhook/volunteer/form` | 公開表單別名。 |
+| `GET` | `/webhook/volunteer/form/{line_user_id}` | 個人表單別名。 |
+| `POST` | `/volunteer/form/submit` | 接收 HTML 報名表。 |
 
-**本地 Ollama：**
-```env
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL_DISPATCH=mistral
-OLLAMA_MODEL_DEBUG=neural-chat
-```
+## 資料模型
 
-**遠端 Ollama (Tailscale VPN)：**
-```env
-OLLAMA_BASE_URL=http://100.76.39.84:11434
-OLLAMA_MODEL_DISPATCH=mistral
-OLLAMA_MODEL_DEBUG=neural-chat
-```
-OLLAMA_MODEL_DEBUG=neural-chat
-```
+### `Location`
 
-## 4. API 合約
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `lat` | float | 緯度。 |
+| `lng` | float | 經度。 |
 
-### 輸入：DispatchRequest
+### `Metadata`
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `incident_id` | string | 事件識別碼。 |
+| `priority_weighting` | enum | `balanced`、`speed`、`expertise`。 |
+
+### `WorkType`
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `type_id` | string | 工作類型 ID，需與任務的 `type_id` 對應。 |
+| `required_skills` | string[] | 執行此類工作所需技能。 |
+
+### `Volunteer`
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `id` | string | 志工 ID。 |
+| `skills` | string[] | 技能清單。 |
+| `location` | `Location` | 志工位置。 |
+| `availability` | boolean | 是否可出勤。 |
+| `age` | int | 選填。 |
+| `line_user_id` | string | 選填，用於個人通知。 |
+| `special_skills` | string[] | 選填。 |
+
+### `Task`
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `id` | string | 任務 ID。 |
+| `type_id` | string | 對應 `WorkType.type_id`。 |
+| `location` | `Location` | 任務位置。 |
+| `urgency` | int | 1–5，數字愈大愈急迫。 |
+| `destination` | string | 選填，目的地文字。 |
+| `job_description` | string | 選填，工作說明。 |
+
+### `DispatchRequest`
+
 ```json
 {
-  "metadata": {"incident_id": "xxx", "priority_weighting": "balanced"},
+  "metadata": {
+    "incident_id": "incident-2026-001",
+    "priority_weighting": "balanced"
+  },
+  "work_types": [
+    {
+      "type_id": "field_check",
+      "required_skills": ["field_check", "communication"]
+    }
+  ],
   "volunteers": [
-    {"id": "vol_01", "skills": ["medical"], "location": {"lat": 23.0, "lng": 121.5}, "availability": true}
+    {
+      "id": "vol_01",
+      "skills": ["field_check", "communication"],
+      "location": {"lat": 23.65, "lng": 121.43},
+      "availability": true
+    }
   ],
   "tasks": [
-    {"id": "task_101", "type_id": "medical", "location": {"lat": 23.1, "lng": 121.5}, "urgency": 5}
-  ],
-  "work_types": []
-}
-```
-
-### 輸出：Response
-```json
-{
-  "status": "success",
-  "dispatch_id": "uuid-xxx",
-  "assignments": [
     {
-      "task_id": "task_101",
-      "assigned_volunteers": ["vol_01"],
-      "eta_minutes": 15,
-      "reasoning_summary": "[Ollama 派發模型] 指派 vol_01"
+      "id": "task_101",
+      "type_id": "field_check",
+      "location": {"lat": 23.66, "lng": 121.44},
+      "urgency": 5,
+      "job_description": "現地查核與回報"
     }
   ]
 }
 ```
 
-## 5. 工作流程
+### `DispatchResponse`
 
-```
-1. 接收 DispatchRequest
-   ↓
-2. 過濾可用志工 (availability=true)
-   ↓
-3. 按緊急度排序任務
-   ↓
-4. 對每個任務：
-   ├─ 嘗試用派發模型 (mistral) 給出建議
-   ├─ 若無效，用偵錯模型 (neural-chat) 驗證
-   ├─ 若仍無效，用本地演算法分配
-   └─ 將該志工從可用清單移除
-   ↓
-5. 回傳所有分配
-```
+| 欄位 | 說明 |
+|---|---|
+| `status` | 執行狀態。 |
+| `dispatch_id` | 本次派工 ID。 |
+| `incident_id` | 事件 ID。 |
+| `mode` | `algorithm_only` 或 `algorithm_with_ai_anomaly_check`。 |
+| `assignments` | 每項任務的指派結果。 |
+| `unassigned_tasks` | 無法指派的任務 ID。 |
+| `warnings` | 需人員注意的事項。 |
 
-## 6. 本地演算法
+每筆 assignment 至少包含 `task_id`、`assigned_volunteers`、`eta_minutes`、`confidence`、`score_breakdown` 與 `reasoning_summary`。
 
-**目的**：若 Ollama 不可用，確保系統仍能進行分配
+## 派工規則
 
-**步驟**：
-1. 對每個志工，檢查其 `skills` 是否包含任務的 `type_id`
-2. 優先選擇有技能匹配的志工
-3. 若無匹配志工，則考慮全部可用志工
-4. 在候選者中選擇距離最近的（使用 Haversine 公式）
-5. 計算 ETA = (距離 / 40 km/h) × 60 + 5 分鐘
+1. 只使用 `availability=true` 的志工。
+2. 任務依 `urgency` 由高到低處理。
+3. 每個任務優先取得最高分志工。
+4. 剩餘志工再依最佳匹配補入。
+5. 沒有可用候選人時，任務列入 `unassigned_tasks`。
+6. 結果必須交由人員覆核，特別是技能未完整符合或 ETA 過長時。
 
-**範例**：
-- Task: medical, 3 位志工，距離分別 1km, 0.5km, 2km
-- 有技能匹配的：vol_01(1km), vol_02(2km)
-- 選擇最近的：vol_01
-- ETA = (1/40)*60 + 5 = 6.5 分鐘
+### 權重
 
-## 7. 失敗模式與處理
+| 模式 | 技能 | 距離 | 急迫度 |
+|---|---:|---:|---:|
+| `balanced` | 45% | 35% | 20% |
+| `speed` | 25% | 55% | 20% |
+| `expertise` | 60% | 25% | 15% |
 
-| 情況 | 行為 |
-|------|------|
-| Ollama 無法連線 | 直接用本地演算法 |
-| 派發模型超時 | 異常捕捉，進入偵錯/降級 |
-| 派發模型回傳無效 ID | 呼叫偵錯模型二次驗證 |
-| 偵錯模型也失敗 | 用本地演算法 |
-| JSON 解析失敗 | 用本地演算法 |
+## LINE 與表單
 
-## 8. 日誌等級
+- `/api/v1/dispatch/start` 會開放團報，並在設定完成時嘗試向 `LINE_GROUP_ID` 推送公開表單。
+- `/api/v1/line/register` 在報名開放期間登記單一志工，必要時由 `GOOGLE_MAPS_API_KEY` 將地址轉座標。
+- `/volunteer/form/submit` 接收表單；地址與經緯度至少需提供一種可用位置資料。
+- LINE webhook 應驗證 `x-line-signature`。
 
-| 等級 | 用途 |
-|------|------|
-| INFO | 模型呼叫、任務開始 |
-| WARNING | 模型回傳異常、需降級 |
-| ERROR | 異常捕捉、連線失敗 |
+## 部署提醒
 
-## 9. 模型選擇建議
-
-### 派發模型（OLLAMA_MODEL_DISPATCH）
-- **mistral** (推薦)：7B，快速，足夠聰慧
-- llama2：7B，通用
-- orca-mini：3B，最輕量
-
-### 偵錯模型（OLLAMA_MODEL_DEBUG）
-- **neural-chat** (推薦)：8B，對話優化，驗證準確
-- dolphin：7B，多功能
-- openchat：7B，平衡型
-
-## 10. 性能考量
-
-- **首次啟動**：模型載入需要 30 秒 ~ 5 分鐘（取決於模型大小和 GPU）
-- **推理時間**：per task 約 2-5 秒（GPU）或 10-30 秒（CPU）
-- **記憶體**：mistral 約 4GB，neural-chat 約 5GB
-
-## 11. 測試計畫
-
-1. **單元測試**：本地演算法邏輯
-2. **集成測試**：
-   - Ollama 正常：驗證 AI 輸出
-   - Ollama 中斷：驗證降級
-   - 邊界情況：無志工、無任務
-
-## 12. 延伸建議
-
-- 添加模型量化支持（Q4 版本更輕量）
-- 實現批量處理以提升吞吐量
-- 添加決策日誌詳細版本用於審計
-- 支援多模型 ensemble 提高準確性
-
+此服務目前文件未定義完整對外驗證模型。正式對外時，不應裸露管理與派工 endpoint；請加上 HTTPS、反向代理、存取控制、限流、輸入驗證、日誌與稽核。

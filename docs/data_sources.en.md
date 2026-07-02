@@ -1,35 +1,43 @@
-<p align="right">
-<a href="./data_sources.md">繁體中文</a> | English
-</p>
+# Data Sources, Modes, and Trust
 
-# Data Sources and Integration Plan
+## Data must be traceable, not merely abundant
 
-This project currently uses sample data to validate the dual-component workflow. In real deployment, it can integrate public disaster data, village-level data, road status data, disaster reports, and volunteer data.
+Risk ranking is only decision support. Each output needs to show its source, generation time, failures, and whether it is live, batch, sample, or unverified.
 
-## Planned Data Sources
+## Silent-zone data categories
 
-| Data Type | Purpose | MVP Usage | Production Integration |
+| Category | Examples | Use | Caution |
 |---|---|---|---|
-| Village boundary and administrative data | Define the analysis unit and map risk scores to villages | Sample village data | Government open data or GIS datasets |
-| Rainfall, water level, flood, or debris-flow risk data | Estimate regional disaster risk | Simulated risk fields | Real-time observation or disaster-prevention open data |
-| Disaster report data | Detect areas with unexpectedly low reporting | Sample report count | Reporting systems, LINE Bot, forms, or APIs |
-| Road status data | Estimate accessibility and rescue difficulty | Sample road status | Road closure, bridge, or transportation interruption data |
-| Population and elderly ratio data | Identify vulnerable areas and proactive field-check needs | Sample demographic indicators | Population statistics or village-level datasets |
-| Volunteer data | Match tasks with suitable volunteers | `examples/sample_volunteers.json` | Volunteer platforms, local agencies, or disaster-response groups |
+| Spatial base | village boundaries | Spatial aggregation | Track administrative-boundary versions. |
+| Static risk | flood/landslide potential, population/age features | Static risk score and explanations | Static data is not live incident evidence. |
+| Live signals | rainfall, alerts, road/event feeds | Live event/sensor features | Source failure/latency must be exposed. |
+| Observation gaps | coverage/observability data | Sensor-gap score | A gap means uncertainty, not proof of harm. |
+| Reports | LINE, manual, API | Verified reports build features/incidents | `pending` never enters formal ranking. |
+| Volunteer data | skills, location, availability | Dispatch matching | Personal data; minimize and govern it. |
 
-## MVP Data
+## `data_mode`
 
-The repository currently provides:
+| Mode | Meaning | Allowed use | Prohibited claim |
+|---|---|---|---|
+| `live` | A same-run live pipeline completed. | Current human-review support. | Not an official disaster declaration. |
+| `batch` | Batch output. | Analysis, retrospective review. | Not real time. |
+| `sample` | Bundled fixture. | Demo/UI/schema validation. | Not current or real incident data. |
+| `unverified` | Output exists without a trusted manifest. | Manual inspection first. | Not operational decision input. |
 
-- `examples/sample_silent_zone_output.json`
-- `examples/sample_volunteers.json`
-- `examples/sample_dispatch_output.json`
+Also inspect `generated_at`, `generated_age_seconds`, `freshness`, `source_status`, `has_source_issues`, `run_id`, `scoring_mode`, and `model_status`.
 
-These files are used to validate the data flow and do not represent real disaster results.
+## Report lifecycle
 
-## Deployment Notes
+```text
+LINE / Manual / API
+        ↓
+     pending
+     ├── verified → 6h/24h features + verified_incident_queue
+     └── rejected → review record, excluded from formal analysis
+```
 
-1. Data licenses and update frequency must be verified.
-2. Real-time data may contain delay, missing values, or inconsistent formats.
-3. Volunteer data involves personal information and must follow consent and data minimization principles.
-4. System output should support decision-making, not replace emergency command or field judgment.
+LINE user IDs should be HMAC-hashed; unnecessary identifiers, full addresses, and sensitive data should not be retained.
+
+## Volunteer-data governance
+
+Collect only what dispatch needs: skills, availability, enough location data for distance estimates, and a minimal notification identifier when justified. Production use needs consent/notice, retention and deletion policies, access logging, database protection, and a minimal-retention rule for original addresses.
