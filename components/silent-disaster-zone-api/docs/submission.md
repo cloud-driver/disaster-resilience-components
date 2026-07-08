@@ -2,104 +2,99 @@
 
 ## 作品名稱
 
-**沉默災區偵測 API：高風險、低觀測、低通報區域辨識元件**
+沉默災區偵測 API：高風險但低通報區域辨識元件
 
 ## 一句話介紹
 
-整合公開風險資料、即時事件、觀測缺口與經人工確認的通報活動，找出「最需要優先人工確認」的村里，並以標準化輸出提供儀表板、GIS、查報與派工系統使用。
+本元件用公開災害資料、人口脆弱度、即時感測與通報資料，找出「本來應該被注意，但目前缺乏通報或觀測覆蓋」的村里，協助災防單位優先派員確認。
 
-## 問題描述
+## 核心問題
 
-災情通報多的地點不一定是唯一需要關注的地點。當通訊中斷、交通受阻、感測不足、高齡人口比例較高或數位通報能力較低時，真正需要協助的地點可能反而缺少即時消息。
+災情通報多的地方不一定最危險；真正危險的地方，可能因為斷訊、交通中斷、高齡人口比例高、感測器覆蓋不足或數位通報能力低，反而沒有即時回報。
 
-本元件不將「無通報」直接等同於災害，而是將它與風險證據與觀測缺口合併，建立可解釋的人工確認優先序。
+因此，本元件不是只看「哪裡有通報」，而是找出「高風險但低通報」的沉默災區候選點。
 
-## 元件類型與定位
+## 元件定位
 
-- 類型：Service Component / API Component。
-- 使用者：地方災防承辦、查報人員、GIS／儀表板開發者、巡查／志工協調者。
-- 可串接：災害應變儀表板、地圖系統、LINE 回報流程、人工審核流程、巡查派工與其他防災資料平台。
-- 不做：官方災害宣告、撤離命令、自動派遣或自動決定生命安全狀態。
+本作品定位為可重複使用的防災 API 元件，而不是完整防災平台。
+
+它可以被接到：
+
+- 災害應變儀表板
+- 地圖系統
+- LINE Bot 通報系統
+- 地方政府災情查報流程
+- 巡查任務派發系統
 
 ## Input
 
-| 資料類別 | 用途 |
-|---|---|
-| 村里界圖資與靜態災害風險 | 建立區域分析與基礎風險。 |
-| 人口／脆弱度特徵 | 支援解釋與後續巡查任務設計。 |
-| 即時雨量、警戒、道路等事件資料 | 產生當輪即時事件訊號。 |
-| 感測器覆蓋與缺口 | 估計觀測不足。 |
-| LINE／manual／API 通報 | 先入 `pending`，人工審核為 `verified` 後才進入正式特徵。 |
+目前 MVP 使用以下資料：
+
+- 村里界圖資
+- 人口與高齡比例資料
+- 淹水潛勢圖
+- 土石流影響範圍圖
+- 中央氣象署即時雨量資料
+- 農村水保署土石流警戒與雨量資料
+- 警廣即時路況資料
+- mock 災情通報資料
 
 ## Process
 
-1. 抓取或讀取資料，建立單一 `run_id`。
-2. 清洗、正規化並空間對應至村里。
-3. 由已驗證通報建立近 6／24 小時通報特徵與已驗證事件 snapshot。
-4. 使用共享的 `rule_based_mvp` 公式計算沉默風險。
-5. 產生 `silent_watch_queue` 與 `verified_incident_queue`。
-6. 產出 JSON、CSV、GeoJSON 與 `run_manifest.json`。
-7. 若啟用 Ollama，只將既有結果整理為人可讀摘要；AI 不可改變排序或發布命令。
+系統流程包含：
+
+1. 靜態資料清洗與空間標準化
+2. 村里層級人口與高齡脆弱度計算
+3. 淹水與土石流風險特徵計算
+4. 即時 API 快照抓取與歷史保存
+5. 即時雨量、土石流、路況資料轉成村里層級特徵
+6. 通報資料空間 join 到村里
+7. 產生沉默風險分數
+8. 透過 FastAPI 輸出 JSON、CSV、GeoJSON
 
 ## Output
 
-```text
-outputs/latest/silent_risk.json
-outputs/latest/silent_risk.csv
-outputs/latest/silent_risk.geojson
-outputs/latest/verified_incidents.json
-outputs/latest/run_manifest.json
-```
+元件輸出：
+
+- `silent_risk.json`
+- `silent_risk.csv`
+- `silent_risk.geojson`
 
 主要欄位：
 
-- `village_id`、`county_name`、`town_name`、`village_name`
-- `silent_risk_score`、`silent_risk_level`
-- `static_risk_score`、`sensor_gap_score`、`realtime_event_score`
-- `report_count_6h`、`report_count_24h`
-- `scoring_mode`、`model_status`
-- `meta.data_mode`、`freshness`、`run_id`、`source_status`
+- `village_id`
+- `county_name`
+- `town_name`
+- `village_name`
+- `silent_risk_score`
+- `silent_risk_level`
+- `silent_reason`
+- `silent_risk_rule_score`
+- `silent_risk_nn_score`
 
-## API 與示範
+## API Endpoints
 
-API 路徑包含：
-
-- `POST /auth/login`
-- `GET /silent-risk`
-- `GET /silent-risk/top`
+- `GET /health`
+- `GET /model/info`
+- `GET /silent-risk/top?limit=5`
+- `GET /silent-risk/top?limit=5&refresh=true`
 - `GET /silent-risk/{village_id}`
 - `GET /silent-risk.geojson`
-- `GET /reports/summary`
-- `GET /incidents/verified`
-- `POST /line/webhook`
-- `POST /pipeline/run`
 
-完整互動文件：`/docs`。一般 API 需要短效 Bearer Token；通報審核與 pipeline 等高權限操作另需 `REPORT_ADMIN_KEY`。
+## AI 使用方式
 
-## AI 使用與界線
+MVP 階段使用規則式分數產生 pseudo-label，訓練 MLPRegressor 神經網路模型作為 scoring layer，驗證未來可替換模型的架構。
 
-| 可做 | 不可做 |
-|---|---|
-| 整理既有規則式隊列與原因 | 改變正式排序或增加／刪除村里 |
-| 產生人可讀的工作摘要 | 宣稱災害已發生 |
-| 進行選用實驗性架構驗證 | 發布撤離、封路、停班停課或強制派遣命令 |
-
-神經網路實驗層目前使用 pseudo-label，只用於架構驗證；不得宣稱預測準確度，亦不得取代正式規則式排序。
+目前神經網路不是使用真實災害 ground truth 訓練，因此不宣稱能準確預測真實災情。正式版可使用歷史災情、巡查結果、救災派遣紀錄或通報延遲資料重新訓練。
 
 ## MVP 限制
 
-- 分析範圍目前為花蓮縣村里層級。
-- 外部 API、網路與資料更新會影響 live pipeline 可用性。
-- LINE webhook 對外運作需要公開 HTTPS 網域與 LINE Developers 設定。
-- `refresh=true` 是同步阻塞操作，正式環境應改為背景 job／排程。
-- 水利署水位資料尚未完成整合。
-- 路況影響仍以規則式特徵為主。
-- sample 輸出只用於 demo，不能作為即時資訊。
+- 通報資料目前為 mock data。
+- 神經網路目前使用 pseudo-label，不是真實災害標籤。
+- WRA 水利署水位資料尚未完成串接。
+- 路況事件嚴重程度目前使用關鍵字規則。
+- 本元件輸出的是優先關注清單，不等同於實際災情判定。
 
-## 延伸可能
+## GitHub
 
-- 將 batch／refresh 流程改為受保護的背景任務與排程。
-- 以 Caddy/Nginx 與 HTTPS 部署，建立管理與稽核介面。
-- 接入更多可靠的水文、交通、通訊與巡查資料。
-- 使用歷史災情與現地巡查結果建立真正的標註資料與模型評估流程。
-- 將結果透過母 repo 的 `IntegratedTask` contract 接入巡查或志工派工元件。
+https://github.com/cloud-driver/silent-disaster-zone-api
