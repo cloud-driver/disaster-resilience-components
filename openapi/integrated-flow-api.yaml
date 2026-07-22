@@ -4,12 +4,18 @@ info:
   version: 0.1.0
   description: >
     This OpenAPI document describes the data contract for connecting the
-    Silent Disaster Zone Detection component with the Volunteer Dispatch component.
-    It is intended as an integration contract for future service implementation.
+    Silent Disaster Zone Detection component with the Volunteer Dispatch
+    component. It is intended as an integration contract for future service
+    implementation.
+
+security:
+  - ApiKeyAuth: []
 
 paths:
   /integrated-flow/dispatch-recommendations:
     post:
+      security:
+        - ApiKeyAuth: []
       summary: Generate volunteer dispatch recommendations from silent disaster zone tasks
       description: >
         Accepts normalized disaster tasks generated from high-risk low-report areas
@@ -48,6 +54,12 @@ paths:
                       $ref: "#/components/schemas/DispatchResult"
 
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
   schemas:
     IntegratedTask:
       type: object
