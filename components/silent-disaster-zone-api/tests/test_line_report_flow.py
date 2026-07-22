@@ -51,9 +51,7 @@ class LineReportFlowTests(unittest.TestCase):
             / "line_reports.sqlite3"
         )
 
-        self.reporter_secret = (
-            "test-reporter-secret"
-        )
+        self.reporter_secret = secrets.token_urlsafe(32)
 
     def tearDown(self):
         self.temp_dir.cleanup()

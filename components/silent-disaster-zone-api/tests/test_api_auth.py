@@ -45,7 +45,7 @@ class ApiAuthTests(unittest.TestCase):
         )
 
         os.environ["AUTH_STORAGE_SECRET"] = (
-            "test-storage-secret"
+            secrets.token_urlsafe(32)
         )
 
         os.environ["AUTH_TRUST_PROXY_HEADERS"] = "true"
