@@ -2,11 +2,14 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-
+import secrets
 from fastapi.testclient import TestClient
 
 from src.api.main import app
 from src.auth.store import hash_password
+
+VALID_TEST_PASSWORD = secrets.token_urlsafe(24)
+INVALID_TEST_PASSWORD = secrets.token_urlsafe(24)
 
 
 class ApiAuthTests(unittest.TestCase):
@@ -38,7 +41,7 @@ class ApiAuthTests(unittest.TestCase):
         )
 
         os.environ["AUTH_LOGIN_PASSWORD_HASH"] = (
-            hash_password("test-password")
+            hash_password(VALID_TEST_PASSWORD)
         )
 
         os.environ["AUTH_STORAGE_SECRET"] = (
@@ -63,7 +66,7 @@ class ApiAuthTests(unittest.TestCase):
             "/auth/login",
             json={
                 "username": "test-admin",
-                "password": "test-password",
+                "password": VALID_TEST_PASSWORD,
             },
             headers={
                 "X-Forwarded-For": "203.0.113.10",
@@ -152,7 +155,7 @@ class ApiAuthTests(unittest.TestCase):
                 "/auth/login",
                 json={
                     "username": "test-admin",
-                    "password": "wrong-password",
+                    "password": INVALID_TEST_PASSWORD,
                 },
                 headers=headers,
             )
@@ -163,7 +166,7 @@ class ApiAuthTests(unittest.TestCase):
             "/auth/login",
             json={
                 "username": "test-admin",
-                "password": "wrong-password",
+                "password": INVALID_TEST_PASSWORD,
             },
             headers=headers,
         )

@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-
+import secrets
 from src.line_bot.client import (
     make_webhook_signature,
     verify_webhook_signature,
@@ -18,7 +18,7 @@ class LineWebhookSignatureTests(unittest.TestCase):
     def test_signature_verification(self):
         body = b'{"events":[]}'
 
-        secret = "test-line-secret"
+        secret = secrets.token_urlsafe(32)
 
         signature = make_webhook_signature(
             body,
